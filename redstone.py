@@ -51,7 +51,7 @@ def purge_frame(frame: orso.DataFrame):
 
     return orso.DataFrame(schema=["timestamp", "hostname", "process_name", "pid", "message", "host", "port"])
 
-def syslog_listener(host: str = '0.0.0.0', port: int = 514):
+def syslog_listener(host: str = '0.0.0.0', port: int = 1111):
     """
     A simple syslog listener that listens for syslog messages on the specified host and port.
 
