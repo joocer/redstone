@@ -3,46 +3,53 @@
 import socket
 import datetime
 import orso
+import re
+from typing import Dict
 
-def parse_syslog_entry(entry: str, host:str, port:int, current_year: int = datetime.datetime.now().year) -> dict:
+def parse_syslog_entry(log: str) -> Dict[str, Dict]:
     """
-    Parses a syslog entry into its components.
+    Parse a syslog entry and categorize fields into mandatory (parent dict) and optional (child dict).
 
     Parameters:
-        entry (str): The syslog entry string.
-    
-    Returns:
-        dict: A dictionary containing parsed components of the syslog.
-    """
-    # Split by spaces to get the timestamp, hostname, and the remaining message
-    print(entry)
-    parts = entry.split(' ', 4)
-    timestamp_str = f"{parts[0]} {parts[1]} {parts[2]}"
-    hostname = parts[3]
+        log: str
+            The syslog entry as a string.
 
-    # Parse the timestamp string into a datetime object
-    timestamp = datetime.datetime.strptime(f"{current_year} {timestamp_str}", "%Y %b %d %H:%M:%S")
+    Returns:
+        Dict[str, Dict]: A dictionary with mandatory fields in the parent dictionary 
+                         and optional fields in a child dictionary under the "log" key.
+    """
     
-    # The remaining part should contain process, pid, and the actual message
-    process_part, message = parts[4].split(': ', 1)
+    # Regular expression to match key="value" or key=value patterns
+    regex_pattern = r'(\w+)="([^"]*)"|(\w+)=([^"\s]+)'
+
+    # Fields considered mandatory and will be placed in the parent dictionary
+    mandatory_fields = {"device_name", "timestamp", "severity"}
     
-    # Process part may contain process name and pid in the format "process[pid]"
-    if '[' in process_part and ']' in process_part:
-        process_name, pid = process_part.split('[')
-        pid = pid.rstrip(']')
-    else:
-        process_name = process_part
-        pid = None
+    # Initialize parent and child dictionaries
+    parent_dict = {}
+    child_dict = {}
+
+    # Extract key-value pairs using regex
+    matches = re.findall(regex_pattern, log)
     
-    return {
-        "timestamp": timestamp,
-        "hostname": hostname,
-        "process_name": process_name,
-        "pid": pid,
-        "message": message,
-        "host": host,
-        "port": port
-    }
+    for match in matches:
+        # Extract key and value from regex groups
+        key = match[0] if match[0] else match[2]
+        value = match[1] if match[1] else match[3]
+        
+        # Add to parent dictionary if the key is mandatory, otherwise to child dictionary
+        if key in mandatory_fields:
+            parent_dict[key] = value
+        else:
+            child_dict[key] = value
+
+    # Combine mandatory fields with optional fields in the final dictionary
+    parsed_log = parent_dict
+    parsed_log["log"] = child_dict
+    
+    print(parsed_log)
+
+    return parsed_log
 
 def purge_frame(frame: orso.DataFrame):
     #from pyarrow import parquet
@@ -73,7 +80,9 @@ def syslog_listener(host: str = '0.0.0.0', port: int = 1111):
         while True:
             # Receive data from the socket
             data, (host, port) = sock.recvfrom(2048)  # Buffer size is 2048 bytes
-            entry = parse_syslog_entry(data.decode(), host, port)
+            entry = parse_syslog_entry(data.decode())
+            entry["host"] = host
+            entry["port"] = port
             df.append(entry)
 
             if df.rowcount >= 50_000:
