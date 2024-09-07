@@ -15,6 +15,7 @@ def parse_syslog_entry(entry: str, host:str, port:int, current_year: int = datet
         dict: A dictionary containing parsed components of the syslog.
     """
     # Split by spaces to get the timestamp, hostname, and the remaining message
+    print(entry)
     parts = entry.split(' ', 4)
     timestamp_str = f"{parts[0]} {parts[1]} {parts[2]}"
     hostname = parts[3]
