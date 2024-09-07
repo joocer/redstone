@@ -47,7 +47,8 @@ def parse_syslog_entry(log: str) -> Dict[str, Dict]:
     parsed_log = parent_dict
     parsed_log["log"] = child_dict
     
-    print(parsed_log)
+    if parsed_log["device_name"] != 'SFW':
+        print(parsed_log)
 
     return parsed_log
 
