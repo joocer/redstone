@@ -74,11 +74,12 @@ def syslog_listener(host: str = '0.0.0.0', port: int = 1111):
             data, (host, port) = sock.recvfrom(2048)  # Buffer size is 2048 bytes
             try:
                 entry = parse_syslog_entry(data.decode(), host, port)
-                print(entry)
+                print("\n", entry)
                 df.append(entry)
             except:
-                print(data)
                 print("X", end="", flush=True)
+                #print(data)
+
 
 
             if df.rowcount >= 50_000:
