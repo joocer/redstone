@@ -6,7 +6,6 @@ import orso
 import re
 from typing import Dict
 
-import datetime
 
 def parse_syslog_entry(entry: str, host: str, port: int, current_year: int = datetime.datetime.now().year) -> dict:
     """
@@ -25,11 +24,14 @@ def parse_syslog_entry(entry: str, host: str, port: int, current_year: int = dat
     # Remove the code at the start (e.g., <34>)
     if entry.startswith('<') and '>' in entry:
         entry = entry.split('>', 1)[1].strip()
-
+    
+    # Collapse multiple spaces to handle inconsistent spacing
+    entry = re.sub(r'\s+', ' ', entry)
+    
     # Split by spaces to get the timestamp, hostname, and the remaining message
     parts = entry.split(' ', 4)
-
-    # Zero-fill the day if necessary
+    
+    # Properly zero-fill the day part
     month, day, time = parts[0], parts[1].zfill(2), parts[2]
     timestamp_str = f"{month} {day} {time}"
     hostname = parts[3]
