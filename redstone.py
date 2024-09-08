@@ -76,8 +76,8 @@ def syslog_listener(host: str = '0.0.0.0', port: int = 1111):
                 entry = parse_syslog_entry(data.decode(), host, port)
                 print("\n", entry)
                 df.append(entry)
-            except:
-                print("X", end="", flush=True)
+            except Exception as err:
+                print(f"X ({err})", end="", flush=True)
                 #print(data)
 
 
