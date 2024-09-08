@@ -6,19 +6,34 @@ import orso
 import re
 from typing import Dict
 
-def parse_syslog_entry(entry: str, host:str, port:int, current_year: int = datetime.datetime.now().year) -> dict:
+import datetime
+
+def parse_syslog_entry(entry: str, host: str, port: int, current_year: int = datetime.datetime.now().year) -> dict:
     """
     Parses a syslog entry into its components.
+    
     Parameters:
         entry (str): The syslog entry string.
-    
+        host (str): The host from which the log was received.
+        port (int): The port from which the log was received.
+        current_year (int): The current year for constructing the timestamp.
+        
     Returns:
         dict: A dictionary containing parsed components of the syslog.
     """
+    
+    # Remove the code at the start (e.g., <34>)
+    if entry.startswith('<') and '>' in entry:
+        entry = entry.split('>', 1)[1].strip()
+
     # Split by spaces to get the timestamp, hostname, and the remaining message
     parts = entry.split(' ', 4)
-    timestamp_str = f"{parts[0]} {parts[1]} {parts[2]}"
+
+    # Zero-fill the day if necessary
+    month, day, time = parts[0], parts[1].zfill(2), parts[2]
+    timestamp_str = f"{month} {day} {time}"
     hostname = parts[3]
+
     # Parse the timestamp string into a datetime object
     timestamp = datetime.datetime.strptime(f"{current_year} {timestamp_str}", "%Y %b %d %H:%M:%S")
     
