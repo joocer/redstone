@@ -75,9 +75,11 @@ def syslog_listener(host: str = '0.0.0.0', port: int = 1111):
             try:
                 entry = parse_syslog_entry(data.decode(), host, port)
                 print(entry)
+                df.append(entry)
             except:
+                print(data)
                 print("X", end="", flush=True)
-            df.append(entry)
+
 
             if df.rowcount >= 50_000:
                 print(".")
